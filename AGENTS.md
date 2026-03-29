@@ -293,3 +293,16 @@
   - `node --import tsx scripts/release-check.ts`
   - `pnpm release:check`
   - `pnpm test:install:smoke` or `OPENCLAW_INSTALL_SMOKE_SKIP_NONROOT=1 pnpm test:install:smoke` for non-root smoke path.
+
+## Cursor Cloud specific instructions
+
+- **Runtime**: Node 22+ and pnpm 10.23+ are pre-installed. Bun is not required but can be installed if needed.
+- **Dependencies**: `pnpm install` is the update script and runs on every VM startup. No external databases or services are needed — OpenClaw uses local SQLite/file storage.
+- **Build / lint / test / run commands**: see `## Build, Test, and Development Commands` above — all standard `pnpm` scripts documented there work as-is.
+- **Gateway dev mode**: `pnpm gateway:dev` starts the gateway with channels disabled (`OPENCLAW_SKIP_CHANNELS=1`) on port **19001** (dev profile shifts ports). Health check: `curl http://127.0.0.1:19001/health` returns `{"ok":true,"status":"live"}`.
+- **CLI dev mode**: `pnpm openclaw --dev <command>` runs any CLI command against the dev profile (state in `~/.openclaw-dev/`). Use `pnpm openclaw --dev doctor` to verify gateway connectivity.
+- **Tests under memory pressure**: use `OPENCLAW_TEST_PROFILE=low OPENCLAW_TEST_SERIAL_GATEWAY=1 pnpm test` to reduce memory usage on constrained VMs.
+- **Native modules**: `sharp`, `@lydell/node-pty`, `sqlite-vec`, and `protobufjs` are built during `pnpm install`. Build tools (`gcc`, `g++`, `make`, `python3`) must be available — they are pre-installed in the Cloud Agent VM.
+- **`pnpm.onlyBuiltDependencies`** in `package.json` controls which native deps are allowed to run build scripts. If pnpm warns about ignored build scripts (e.g. `@discordjs/opus`), that's expected — do not run `pnpm approve-builds` (interactive).
+- **No channel credentials needed for dev**: the gateway starts fine without Telegram/Discord/Slack tokens. Channels are skipped in dev mode.
+- **UI**: `pnpm ui:dev` starts the web UI dev server (Vite). `pnpm ui:build` builds it. The gateway auto-builds UI assets on first start if missing.
